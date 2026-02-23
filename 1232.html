@@ -24,13 +24,14 @@ window.processLike = async (id) => {
   await updateDoc(docRef, { likes: increment(1) });
 };
 
-
+// Удаляет запись по ID
 window.deleteRequest = async (id) => {
   if (!confirm("Вы уверены, что хотите удалить запись?")) return;
   const docRef = doc(db, "requests", id);
   await deleteDoc(docRef);
 };
 
+// Обновляет email у конкретной записи
 window.updateEmail = async (id, newEmail) => {
   if (!newEmail.trim()) {
     alert("Email не может быть пустым");
@@ -40,7 +41,7 @@ window.updateEmail = async (id, newEmail) => {
   await updateDoc(docRef, { email: newEmail });
 };
 
-
+// Добавление новой записи
 document.getElementById('mainBtn').onclick = async () => {
   const btn = document.getElementById('mainBtn');
   const name = document.getElementById('name').value.trim();
@@ -72,6 +73,7 @@ document.getElementById('mainBtn').onclick = async () => {
   btn.disabled = false;
 };
 
+// Вывод списка записей
 const q = query(collection(db, "requests"), orderBy("timestamp", "desc"));
 
 onSnapshot(q, (snapshot) => {
