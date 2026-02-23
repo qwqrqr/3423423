@@ -1,0 +1,106 @@
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, query, orderBy,
+  onSnapshot, serverTimestamp, updateDoc, doc, increment, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+const firebaseConfig = {
+   apiKey: "AIzaSyBRCDe11V_kzV_NgjnMQODjBSbt2HPEcw0",
+  authDomain: "project-6310900192150801067.firebaseapp.com",
+  projectId: "project-6310900192150801067",
+  storageBucket: "project-6310900192150801067.firebasestorage.app",
+  messagingSenderId: "972562018918",
+  appId: "1:972562018918:web:65aa4b40ed4c938970b3a7",
+  measurementId: "G-R3ZT2VCSPV"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Увеличивает лайки у записи
+window.processLike = async (id) => {
+  const docRef = doc(db, "requests", id);
+  await updateDoc(docRef, { likes: increment(1) });
+};
+
+
+window.deleteRequest = async (id) => {
+  if (!confirm("Вы уверены, что хотите удалить запись?")) return;
+  const docRef = doc(db, "requests", id);
+  await deleteDoc(docRef);
+};
+
+window.updateEmail = async (id, newEmail) => {
+  if (!newEmail.trim()) {
+    alert("Email не может быть пустым");
+    return;
+  }
+  const docRef = doc(db, "requests", id);
+  await updateDoc(docRef, { email: newEmail });
+};
+
+
+document.getElementById('mainBtn').onclick = async () => {
+  const btn = document.getElementById('mainBtn');
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+
+  if (!name || !email) {
+    alert("Заполни все поля");
+    return;
+  }
+
+  btn.disabled = true;
+
+  try {
+    await addDoc(collection(db, "requests"), {
+      name: name,
+      email: email,
+      likes: 0,
+      timestamp: serverTimestamp()
+    });
+
+    document.getElementById('name').value = "";
+    document.getElementById('email').value = "";
+
+  } catch (e) {
+    console.error(e);
+    alert("Ошибка записи");
+  }
+
+  btn.disabled = false;
+};
+
+const q = query(collection(db, "requests"), orderBy("timestamp", "desc"));
+
+onSnapshot(q, (snapshot) => {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = "";
+
+  snapshot.forEach((docItem) => {
+    const data = docItem.data();
+
+    const time = data.timestamp
+      ? data.timestamp.toDate().toLocaleTimeString()
+      : "...";
+
+    feed.innerHTML += `
+      <div class="post">
+        <span class="time">${time}</span>
+        <b>${data.name}</b>
+        <p>${data.email}</p>
+        <button class="like-btn" onclick="processLike('${docItem.id}')">
+          👍 ${data.likes || 0}
+        </button>
+        <button class="delete-btn" onclick="deleteRequest('${docItem.id}')">
+          🗑 Удалить
+        </button>
+        <button class="update-btn" onclick="updateEmail('${docItem.id}', prompt('Введите новый email:', '${data.email}'))">
+          ✏️ Обновить email
+        </button>
+      </div>
+    `;
+  });
+});
+</script>
